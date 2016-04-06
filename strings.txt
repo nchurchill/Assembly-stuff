@@ -1,0 +1,497 @@
+.model small
+.186
+.stack 100h
+.data
+	buffer				db	13,10,'$'
+	hello				db	'yep',13,10,'$'
+	output_welcome		db	'Greetings user! This program will take a string of your choosing, that',13,10,'is no longer than 50 characters. Then it will offer you several different',13,10,'options for ways to modify your string.',13,10,'$'
+	output_get_string	db	'Please enter your string here!',13,10,'$'
+	output_get_function	db	'Please select your function now.',13,10,'$'
+	output_menu_1		db	'Welcome to the help  menu! The following lines contain the function',13,10,'code numbers that you should use.',13,10,'Function 1: Will  get a char from the user and then output the location',13,10,'of$'
+	output_menu_2		db	' that characters first occurence.',13,10,'Function 2: Will get a char from the user and inform them of how many of that',13,10,'letter occur.',13,10,'Function 3: Will output the strings length.',13,10,'$'
+	output_menu_3		db	'Function 4: Will return the number of characters in the string.',13,10,'Function 5: Will replace all of the chosen characters with a given character.',13,10,'Function 6: Will put the string in capslock.',13,10,'$'
+	output_menu_4		db	'Function 7: Will put all the characters into lowercase.',13,10,'Function 8:will invert the case of all the letters in the string.',13,10,'Function 9: Will ask for a new string.',13,10,'Function 10: $'
+	output_menu_5		db	'Will undo the last action that modified the string, unless its a ',13,10,'new string.',13,10,'Function 100: Will output this menu.',13,10,'Function 0: Will exit the program.',13,10,13,10,'$'
+	function			dw	0
+	Function_counter	db	0
+	Function_charhold	db	' '
+	Function_1and2_1	db	'Please enter your character now: $'
+	Function_1and2_2	db	'The character $'
+	Function_1_3		db	' first appears in the $'
+	Function_1_4		db	' location!',13,10,'$'
+	Function_1_goof		db	13,10,'That character does not seem to be contained in your string. Sorry about that!',13,10,'$'
+	Function_2_3		db	' appears $'
+	Function_2_4		db	' time(s) in your string!',13,10,'$'
+	Function_2_counter	db	0
+	Function_3_1		db	'The length of your string is $'
+	Function_3_2		db	' characters long!',13,10,'$'
+	function_4_1		db	'The string you entered contains $'
+	function_4_2		db	' chars within itself.',13,10,'$'
+	function_4_counter	db	0
+	function_5_replacer	db	' '
+	Function_5_1		db		  'Please enter the character you want replaced:   	       $'
+	Function_5_2		db	13,10,'Please enter the character you want to use as the replacement: $'
+	Function_new_string	db	'Your string is now $'
+	Function_goof		db	'Unfortunatly that choice does not appear to be an accepted function',13,10,'$'
+	output_goodbye		db	'Thank you for visiting, we hope you enjoyed your stay. Please feel free to come back any time!',13,10,'$'
+	first_save			db	0
+	function_10_holder	db	51 dup ('$');'$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
+	function_10_cnthld	db	50
+	saver_return		db	0
+	maxbuf_2			equ	4
+	getbuf_2			db	maxbuf_2
+	getcnt_2			db	?
+	charstr_2			db	maxbuf_2 dup ('$')
+	maxbuf				equ	51
+	getbuf				db	maxbuf
+	getcnt				db	?
+	charstr				db	maxbuf dup ('$')
+.code
+include pcmac.inc
+extrn getdec: near ,putudec: near
+String	PROC
+mov	ax, @data
+mov	ds, ax
+_putstr output_welcome
+;####################################################FUNCTION 9####################################################
+Function_9: 
+_putstr output_get_string
+cmp first_save,1
+jne not_first_string
+mov saver_return,10
+jmp saver
+saved_9_1:
+not_first_string:
+_getstr getbuf
+_putch 10
+_putstr buffer
+cmp first_save,1			;first save goes to 1 so it wont save again but it will save the first time so if the user goes back on turn one nothing silly happens
+je first_string
+mov saver_return,9
+jmp saver
+saved_9_2:					;this is only done on the first time
+inc first_save
+first_string:
+jmp function_100
+;################################################FUNCTION RETRIEVAL################################################			
+get_function:
+_putstr output_get_function
+_getstr getbuf_2
+_putch 10
+mov si,offset charstr_2
+xor ah,ah
+mov al,[si]
+mov function,ax
+cmp function,'0'
+je function_0
+cmp function,'1'		
+je check_1_10_100
+cmp function,'2'
+je function_2
+cmp function,'3'
+je function_3
+cmp function,'4'
+je function_4
+cmp function,'5'
+je function_5
+cmp function,'6'
+je function_6
+cmp function,'7'
+je function_7
+cmp function,'8'
+je function_8
+cmp function,'9'		
+je Function_9
+jmp not_a_function
+Check_1_10_100:
+cmp getcnt_2,1
+je function_1
+cmp getcnt_2,2
+jne check_100
+mov si,offset charstr_2
+inc si
+xor ah,ah
+mov al,[si]
+mov function,ax
+cmp function,'0'
+je function_10
+check_100:
+mov si,offset charstr_2
+inc si
+xor ah,ah
+mov al,[si]
+mov function,ax
+cmp function,'0'
+jne not_100
+inc si
+xor ah,ah
+mov al,[si]
+mov function,ax
+cmp function,'0'
+jne not_100
+jmp function_100
+not_100:
+not_a_function:
+_putstr function_goof
+jmp get_function			
+;####################################################FUNCTION 1####################################################		
+Function_1:
+_putstr Function_1and2_1
+_getch
+mov function_charhold,al
+mov si,offset charstr
+mov function_counter,0
+check_for_position:
+sub ah,ah
+mov al,[si]
+cmp al,function_charhold
+je outstuff
+inc function_counter
+inc si
+mov al,function_counter
+cmp	al,getcnt
+jne check_for_position 
+_putstr function_1_goof
+jmp Get_Function	
+
+outstuff: 
+_putstr buffer
+_putstr Function_1and2_2
+xor ah,ah
+_putch function_charhold
+_putstr function_1_3
+xor ah,ah
+mov al,function_counter
+call putudec
+_putstr function_1_4
+_putstr buffer
+jmp get_function
+;####################################################FUNCTION 2####################################################
+Function_2:
+_putstr Function_1and2_1
+_getch
+mov function_charhold,al
+_putstr buffer
+mov si,offset charstr
+mov function_counter,0
+mov function_2_counter,0
+check_for_count:
+sub ah,ah
+mov al,[si]
+cmp function_charhold,al
+jne not_same
+inc function_2_counter
+not_same:
+inc si
+inc function_counter
+mov al,function_counter
+cmp	al,getcnt
+jne check_for_count
+_putstr Function_1and2_2
+xor ah,ah
+_putch function_charhold
+_putstr function_2_3
+xor ah,ah
+mov al,function_2_counter
+call putudec
+_putstr function_2_4
+_putstr buffer
+jmp Get_Function	
+;####################################################FUNCTION 3####################################################
+Function_3:
+_putstr function_3_1
+xor ah,ah
+mov al,getcnt
+call putudec
+_putstr function_3_2
+_putstr buffer
+jmp get_function
+;####################################################FUNCTION 4####################################################
+Function_4:
+mov si,offset charstr
+mov function_counter,0
+mov function_4_counter,0
+Get_Char_count:
+sub ah,ah
+mov al,[si]
+cmp al,041h
+jl uppercase_out_of_bounds_for_char
+cmp al,05ah
+jg uppercase_out_of_bounds_for_char
+inc function_4_counter
+jmp was_char
+uppercase_out_of_bounds_for_char:
+cmp al,061h
+jl  lowercase_out_of_bounds_for_char
+cmp al,07ah
+jg lowercase_out_of_bounds_for_char
+inc function_4_counter
+jmp was_char
+lowercase_out_of_bounds_for_char:
+cmp al,' '
+jne not_space
+inc function_4_counter
+jmp was_char
+not_space:
+cmp al,'0'
+jl  digit_out_of_bounds_for_char
+cmp al,'9'
+jg digit_out_of_bounds_for_char
+inc function_4_counter
+jmp was_char
+digit_out_of_bounds_for_char:
+was_char:
+inc function_counter
+inc si
+mov al,function_counter
+cmp	al,getcnt
+jne get_char_count
+_putstr function_4_1
+xor ah,ah
+mov al,function_4_counter
+call putudec
+_putstr function_4_2 
+_putstr buffer
+jmp Get_Function
+;####################################################FUNCTION 5####################################################
+Function_5:
+mov saver_return,5
+jmp saver
+saved_5:
+_putstr function_5_1
+_getch
+mov function_charhold,al
+_putstr function_5_2
+_getch 
+mov function_5_replacer,al
+_putstr buffer
+mov si,offset charstr
+mov function_counter,0
+replacer:
+sub ah,ah
+mov al,[si]
+cmp al,function_charhold
+jne dont_replace
+mov al,function_5_replacer
+mov [si],al
+dont_replace:
+inc function_counter
+inc si
+mov al,function_counter
+cmp	al,getcnt
+jne replacer 
+_putstr Function_new_string
+mov si,offset charstr
+mov function_counter,0
+output_string_5:
+sub ah,ah
+_putch [si]
+inc si
+inc function_counter
+mov al,function_counter
+cmp al,getcnt
+jne output_string_5
+_putstr buffer
+_putstr buffer
+jmp Get_Function
+;####################################################FUNCTION 6####################################################
+Function_6:
+mov saver_return,6
+jmp saver
+saved_6:
+mov si,offset charstr
+mov function_counter,0
+going_to_upper:
+sub ah,ah
+mov al,[si]
+cmp al,061h
+jl  lowercase_out_of_bounds
+cmp al,07ah
+jg lowercase_out_of_bounds
+and al,11011111b
+mov [si],al
+lowercase_out_of_bounds:
+inc function_counter
+inc si
+mov al,function_counter
+cmp	al,getcnt
+jne going_to_upper 
+_putstr Function_new_string
+mov si,offset charstr
+mov function_counter,0
+output_string_6:
+sub ah,ah
+_putch [si]
+inc si
+inc function_counter
+mov al,function_counter
+cmp al,getcnt
+jne output_string_6
+_putstr buffer
+_putstr buffer
+jmp Get_Function
+;####################################################FUNCTION 7####################################################
+Function_7:
+mov saver_return,7
+jmp saver
+saved_7:
+mov si,offset charstr
+mov function_counter,0
+going_to_lower:
+sub ah,ah
+mov al,[si]
+cmp al,041h
+jl uppercase_out_of_bounds
+cmp al,05ah
+jg uppercase_out_of_bounds
+or al,00100000b
+mov [si],al
+uppercase_out_of_bounds:
+inc function_counter
+inc si
+mov al,function_counter
+cmp	al,getcnt
+jne going_to_lower 
+_putstr Function_new_string
+mov si,offset charstr
+mov function_counter,0
+output_string_7:
+sub ah,ah
+_putch [si]
+inc si
+inc function_counter
+mov al,function_counter
+cmp al,getcnt
+jne output_string_7
+_putstr buffer
+_putstr buffer
+jmp Get_Function
+;####################################################FUNCTION 8####################################################
+Function_8:
+mov saver_return,8
+jmp saver
+saved_8:
+mov si,offset charstr
+mov function_counter,0
+going_to_alternate:
+sub ah,ah
+mov al,[si]
+cmp al,041h
+jl uppercase_out_of_bounds_for8
+cmp al,05ah
+jg uppercase_out_of_bounds_for8
+or al,00100000b
+mov [si],al
+jmp flipped
+uppercase_out_of_bounds_for8:
+cmp al,061h
+jl  lowercase_out_of_bounds_for8
+cmp al,07ah
+jg lowercase_out_of_bounds_for8
+and al,11011111b
+mov [si],al
+lowercase_out_of_bounds_for8:
+flipped:
+inc function_counter
+inc si
+mov al,function_counter
+cmp	al,getcnt
+jne going_to_alternate 
+mov si,offset charstr
+mov function_counter,0 
+_putstr Function_new_string
+output_string_8:
+sub ah,ah
+_putch [si]
+inc si
+inc function_counter
+mov al,function_counter
+cmp al,getcnt
+jne output_string_8
+_putch 10
+_putstr buffer
+jmp Get_Function
+;####################################################FUNCTION 10###################################################
+Function_10:
+jmp loader
+loaded:
+mov si,offset charstr
+mov function_counter,0 
+_putstr Function_new_string
+output_string_11:
+sub ah,ah
+_putch [si]
+inc si
+inc function_counter
+mov al,function_counter
+cmp al,getcnt
+jne output_string_11
+_putstr buffer
+_putstr buffer
+jmp get_function
+
+saver:
+mov al,getcnt
+mov function_10_cnthld,al
+mov si,offset function_10_holder
+xor bh,bh
+mov bx,offset charstr
+mov function_counter,0
+save:
+xor ah,ah
+mov al,[bx]
+mov [si],al
+inc si
+inc bx
+inc function_counter
+xor ah,ah
+mov al,function_counter
+cmp getcnt,al
+jne save
+cmp saver_return,5
+je saved_5
+cmp saver_return,6
+je saved_6
+cmp saver_return,7
+je saved_7
+cmp saver_return,8
+je saved_8
+cmp saver_return,9
+je saved_9_2
+cmp saver_return,10
+je saved_9_1
+
+loader:
+mov al,function_10_cnthld
+mov getcnt,al
+mov si,offset charstr
+xor bh,bh
+mov bx,offset function_10_holder
+mov function_counter,0
+load:
+xor ah,ah
+mov al,[bx]
+mov [si],al
+inc si
+inc bx
+inc function_counter
+xor ah,ah
+mov al,function_counter
+cmp getcnt,al
+jne load
+jmp loaded
+;###################################################FUNCTION 100###################################################
+Function_100:
+_putstr output_menu_1
+_putstr output_menu_2
+_putstr output_menu_3
+_putstr output_menu_4
+_putstr output_menu_5
+jmp Get_Function
+
+
+function_0:_putstr output_goodbye
+mov	ax, 4c00h
+int	21h
+	String	 ENDP
+END	String
