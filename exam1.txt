@@ -1,0 +1,117 @@
+.model small
+.186
+.stack 100h
+.data
+	output_string			db	'Greetings user! This program will have you enter 2 numbers followed by a letter. If your letters in range A-M you will be given the product/quotient of your #s if the letters in range N-Z you will recieve the sum/difference of your #s.', 13, 10,'$'
+	output_first_number		db	'Please enter your first number now:',13,10,'$'
+	output_second_number	db	'Please enter your second number now:',13,10,'$'
+	output_letter			db	'Please enter your letter now:',13,10,'$'
+	first_var				dw	0
+	second_var				dw	0
+	letter_var				db	' $'
+	save_remainder			dw	0
+	output_am1				db	'The product is $'
+	output_am2				db	', and the division is $'
+	output_am3				db	' remainder $'
+	output_nz1				db	'The sum is $'
+	output_nz2				db	', and the difference is $'
+	output_repeat			db	'Do you wish to repeat? Enter Y if you do, otherwise press the any key to exit.',13,10,'$'
+	output_goodbye			db	'Have a wonderful day and thank you for coming!',13,10,'$'
+	output_no_good			db	'Unfortunaly that was not an accepted input, please try another input.',13,10,'$'
+	buffer					db	13,10,'$'
+	am_start				db	060h
+	nz_start				db	06dh
+.code
+include pcmac.inc 
+extrn getdec: near ,putudec: near,putdec: near
+exam1	PROC
+mov	ax, @data
+mov	ds, ax
+
+
+_putStr output_string
+
+chose_repeat:_putStr buffer				;get the input
+_putStr output_first_number
+call getdec	
+mov first_var,ax
+_putStr output_second_number
+call getdec
+mov second_var,ax
+restart_letter:_putStr output_letter
+_getch
+or al,00100000b
+mov letter_var,al
+_putStr buffer
+mov am_start,060h
+mov nz_start,06dh
+
+determine_if_am:cmp am_start,06dh		;determine if we are between a and m
+je determine_if_nz
+inc am_start
+mov al,letter_var
+cmp al,am_start
+je is_in_am
+jmp determine_if_am
+
+determine_if_nz:cmp nz_start,07bh		;determine if we are between n and z
+je not_letter
+inc nz_start
+mov al,letter_var
+cmp al,nz_start
+je is_in_nz
+jmp determine_if_nz
+
+
+is_in_am: _putStr output_am1			;perform the math and perform the output for the a-m set
+mov ax,first_var
+mul second_var
+call putdec 
+_putStr output_am2
+mov ax,first_var
+xor dx,dx
+cwd
+idiv second_var
+mov save_remainder,dx
+call putdec
+_putStr output_am3
+mov ax,save_remainder
+call putdec
+
+jmp done
+
+is_in_nz:_putStr output_nz1 			;perform the math and perform the output for the n-z set
+mov ax,first_var
+add ax,second_var
+CMP ax,0
+jle abs_it_sum
+sum_abs:call putudec
+_putStr output_nz2
+mov ax,first_var
+sub ax,second_var
+CMP ax,0
+jle abs_it_dif
+dif_abs:call putudec 
+jmp done
+
+abs_it_sum:neg ax 						;find the absolute value of the number
+jmp sum_abs
+abs_it_dif:neg ax
+jmp dif_abs
+
+not_letter:_putStr output_no_good		;letters no good
+jmp restart_letter
+
+done:_putStr buffer						;determine if the user wants to restart
+_putStr output_repeat
+_getch 
+or al,00100000b
+cmp al,'y'
+jge chose_repeat
+_putStr buffer
+_putStr output_goodbye
+
+mov	ax, 4c00h
+int	21h
+	exam1	 ENDP
+END	exam1

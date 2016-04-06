@@ -1,0 +1,140 @@
+.model small
+
+.186
+
+.stack 100h
+
+.data
+	output_say_what_this_is	db	13,10,'This program is utilized to find the volume of a box using the length, width,   and height entered. To enter your values please enter the feet, then press enterand type in the inches followed by another enter.',13,10,'$'
+	output_enter_length	db	13,10,'Please enter the length of your box:',13,10,'$'
+	output_enter_width	db	13,10,'Please enter the width of your box:',13,10,'$'
+	output_enter_height	db	13,10,'Please enter the height of your box:',13,10,'$'
+	output_feet			db	'Feet:    $'
+	output_inch			db	'Inches:  $'
+	output_end_message1	db	13,10,'The volume of your rectangular prism is $'
+	output_end_message2	db	' cubic feet and $'
+	output_end_message3	db	' cubic inches, or',13,10,'$'
+	output_end_message4	db	' total cubic inches. If you would like to find the volume of another box',13,10,'enter "1" else  press the "any-key" now.',13,10,'$'
+	output_final		db	13,10,'Good bye and thank you for coming!',13,10,'$'
+	length_var_feet		dw	?
+	length_var_inch		dw	?
+	width_var_feet		dw	?
+	width_var_inch		dw	?
+	height_var_feet		dw	?
+	height_var_inch		dw	?
+	feet_inch_convert	dw	12
+	save_for_cubic_inches	dw	?
+	
+.code
+extrn getdec: near ,putudec: near
+volume	PROC
+mov	ax, @data
+mov	ds, ax
+
+mov	dx, offset output_say_what_this_is		;give instructions
+mov	ah, 09h
+int	21h
+			
+rerun: mov feet_inch_convert,12 
+mov	dx, offset output_enter_length			;request the length parameters for the box
+mov	ah, 09h
+int	21h
+			
+mov	dx, offset output_feet					;get the feet and inches for the length of the box
+mov	ah, 09h
+int	21h
+call getdec									
+mov length_var_feet,ax
+mov	dx, offset output_inch	
+mov	ah, 09h
+int	21h
+call getdec
+mov length_var_inch,ax
+			
+mov	dx, offset output_enter_width			;request the width parameters for the box
+mov	ah, 09h
+int	21h
+
+mov	dx, offset output_feet					;get the feet and inches for the width of the box
+mov	ah, 09h
+int	21h
+call getdec									
+mov width_var_feet,ax
+mov	dx, offset output_inch	
+mov	ah, 09h
+int	21h
+call getdec
+mov width_var_inch,ax
+
+			
+mov	dx, offset output_enter_height			;request the height parameters for the box
+mov	ah, 09h
+int	21h
+
+mov	dx, offset output_feet					;get the feet and inches for the height of the box
+mov	ah, 09h
+int	21h
+call getdec									
+mov height_var_feet,ax
+mov	dx, offset output_inch	
+mov	ah, 09h
+int	21h
+call getdec
+mov height_var_inch,ax
+
+
+mov ax,length_var_feet						;get the length value purely in inches
+mul feet_inch_convert
+add length_var_inch,ax
+mov ax,length_var_inch
+
+mov ax,width_var_feet						;get the width value purely in inches
+mul feet_inch_convert
+add width_var_inch,ax
+mov ax,width_var_inch
+
+mov ax,height_var_feet						;get the height value purely in inches
+mul feet_inch_convert
+add height_var_inch,ax
+mov ax,height_var_inch
+
+mov ax,length_var_inch						;solve for the number of cubic inches 
+mul width_var_inch
+mul height_var_inch
+mov save_for_cubic_inches,ax
+
+mov feet_inch_convert,1728
+div feet_inch_convert
+mov length_var_feet,ax
+mov	length_var_inch,dx
+mov	dx, offset output_end_message1			
+mov	ah, 09h
+int	21h
+mov ax,length_var_feet
+call putudec
+mov	dx, offset output_end_message2			
+mov	ah, 09h
+int	21h
+mov ax,length_var_inch
+call putudec
+mov	dx, offset output_end_message3			
+mov	ah, 09h
+int	21h
+mov ax,save_for_cubic_inches
+call putudec								;output the number of cubic inches
+mov	dx, offset output_end_message4		
+mov	ah, 09h
+int	21h
+
+call getdec									;see if the user wants to go again
+cmp ax,1
+je rerun
+mov	dx, offset output_final	
+mov	ah, 09h
+int	21h
+
+mov	ax, 4c00h
+int 21h
+
+	volume	 ENDP
+END	volume
